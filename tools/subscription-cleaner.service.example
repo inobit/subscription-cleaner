@@ -4,27 +4,80 @@ After=network.target
 
 [Service]
 Type=simple
-# 运行用户设置（二选一）：
-# 方案1: 使用 root 运行（简单但不推荐）
-# User=root
-# Group=root
 
-# 方案2: 使用专用用户运行（推荐，需先创建用户）
-# 创建用户: sudo useradd --system --user-group --shell /usr/sbin/nologin appuser
-# User=appuser
-# Group=appuser
+# ============================================
+# 用户和组配置（重要！）
+# ============================================
+# 设置运行此服务的用户和组
+# 如果使用普通用户运行，请改为实际用户名
+# 如果使用 root 运行（不推荐），改为 root
+User=your-username
+Group=your-username
 
-WorkingDirectory=/opt/subscription-cleaner
-ExecStart=/usr/bin/node dist/index.js
+# ============================================
+# 工作目录（重要！）
+# ============================================
+# 必须设置为实际的安装目录
+WorkingDirectory=/path/to/subscription-cleaner
+
+# ============================================
+# 启动命令（重要！）
+# ============================================
+# 方案1: 使用系统全局安装的 node
+# ExecStart=/usr/bin/node dist/index.js
+
+# 方案2: 使用 fnm 管理的 node（推荐，需先获取真实路径）
+#
+# 获取 fnm node 真实路径的方法：
+#   方法1: ls ~/.local/share/fnm/node-versions/
+#         # 查看已安装版本，如 v20.12.2
+#         # 路径：~/.local/share/fnm/node-versions/v20.12.2/installation/bin/node
+#
+#   方法2: fnm current
+#         # 输出版本号，如 v20.12.2
+#         # 组合路径：~/.local/share/fnm/node-versions/v20.12.2/installation/bin/node
+#
+#   方法3: readlink -f ~/.local/share/fnm/aliases/default
+#         # 输出真实目录，加上 /bin/node 即可
+#
+# 获取到路径后，替换下面的路径：
+# ExecStart=/home/your-username/.local/share/fnm/node-versions/v20.x.x/installation/bin/node dist/index.js
+
+# 方案3: 通过 shell 启动（适合不想硬编码路径的用户）
+# 这样可以加载用户的 shell 配置，自动获取 fnm 的 node
+ExecStart=/bin/bash -c 'source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null; exec node dist/index.js'
+
 Restart=on-failure
 RestartSec=5
+
+# ============================================
+# 环境变量
+# ============================================
 Environment=NODE_ENV=production
 
-# Security hardening
+# 如果使用 fnm，需要添加 node 到 PATH
+# 请根据实际路径修改（使用 fnm list 查看版本路径）
+# Environment="PATH=/home/your-username/.local/share/fnm/node-versions/v20.x.x/installation/bin:/usr/bin"
+
+# ============================================
+# 安全加固（可选，根据实际情况启用）
+# ============================================
+
+# 禁止获取新的特权
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/subscription-cleaner/logs
+
+# 保护系统目录（如果安装在 /home 目录，建议注释掉此行）
+# ProtectSystem=strict
+
+# 保护用户主目录（如果安装在 home 目录，必须注释掉此行）
+# 否则服务会无法读取/写入工作目录
+# ProtectHome=true
+
+# 可读写路径（需要与 WorkingDirectory 一致）
+# 注意：如果 ProtectSystem=strict 启用，这里需要列出所有可写路径
+ReadWritePaths=/path/to/subscription-cleaner/logs
+
+# 使用私有临时目录
 PrivateTmp=true
 
 [Install]
