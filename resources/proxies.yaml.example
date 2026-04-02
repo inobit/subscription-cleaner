@@ -3,7 +3,7 @@
 # 这些代理不会经过清洗，会放在订阅代理前面
 
 proxies:
-  # - name: hotfree
+  # - name: your-server
   #   type: ss
   #   server: your-server.com
   #   port: 443
