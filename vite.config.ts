@@ -5,9 +5,8 @@ export default defineConfig({
   build: {
     ssr: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: [resolve(__dirname, 'src/index.ts'), resolve(__dirname, 'scripts/generate-token.ts')],
       formats: ['es'],
-      fileName: 'index',
     },
     rollupOptions: {
       external: [/node_modules/],

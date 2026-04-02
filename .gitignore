@@ -31,5 +31,5 @@ coverage/
 
 # Resources (生产环境配置)
 resources/*.yaml
-!resources/sources.yaml
+!resources/sources.yaml.example
 !resources/.gitkeep

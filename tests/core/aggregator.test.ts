@@ -5,12 +5,8 @@ import type { ProxyNode } from '../../src/core/types.ts';
 describe('Node Aggregator', () => {
   describe('aggregateNodes', () => {
     it('应聚合多个节点列表', () => {
-      const list1: ProxyNode[] = [
-        { name: '节点1', type: 'ss', server: '1.1.1.1', port: 8388 },
-      ];
-      const list2: ProxyNode[] = [
-        { name: '节点2', type: 'trojan', server: '2.2.2.2', port: 443 },
-      ];
+      const list1: ProxyNode[] = [{ name: '节点1', type: 'ss', server: '1.1.1.1', port: 8388 }];
+      const list2: ProxyNode[] = [{ name: '节点2', type: 'trojan', server: '2.2.2.2', port: 443 }];
 
       const result = aggregateNodes([list1, list2]);
       expect(result).toHaveLength(2);

@@ -4,10 +4,7 @@ import { parseShadowsocks } from '../../../src/core/parser/shadowsocks.ts';
 describe('Shadowsocks Parser', () => {
   it('应解析有效的SS订阅', () => {
     const methodPass = Buffer.from('aes-256-gcm:password123').toString('base64');
-    const urls = [
-      `ss://${methodPass}@1.2.3.4:8388#节点1`,
-      `ss://${methodPass}@5.6.7.8:443#节点2`,
-    ];
+    const urls = [`ss://${methodPass}@1.2.3.4:8388#节点1`, `ss://${methodPass}@5.6.7.8:443#节点2`];
     const base64 = Buffer.from(urls.join('\n')).toString('base64');
 
     const result = parseShadowsocks(base64);
