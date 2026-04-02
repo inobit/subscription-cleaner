@@ -68,10 +68,14 @@ pnpm gen:token
 │   ├── routes/           # HTTP 路由
 │   ├── middleware/       # Hono 中间件（认证、日志）
 │   ├── services/         # 业务服务层
+│   │   └── subscription.ts  # 订阅服务（含手动代理加载）
 │   └── utils/            # 工具函数（日志、JWT）
 ├── tests/                # 单元测试
 ├── resources/            # 运行时配置
-│   └── sources.yaml      # 订阅源配置
+│   ├── sources.yaml      # 订阅源配置
+│   ├── sources.yaml.example  # 订阅源配置示例
+│   ├── proxies.yaml      # 手动代理配置（可选）
+│   └── proxies.yaml.example  # 手动代理配置示例
 ├── tools/                # 运维部署工具
 │   ├── deploy.sh         # 自动化部署脚本
 │   └── subscription-cleaner.service.example  # systemd 服务模板
@@ -83,14 +87,16 @@ pnpm gen:token
 ### 核心流程
 
 1. **配置加载**: `config.ts` 从环境变量读取配置，生产环境强制要求 `JWT_SECRET`
-2. **订阅聚合**: `services/subscription.ts` → `core/aggregator.ts` 并发拉取多个订阅源
-3. **协议解析**: `core/parser/` 下的解析器将不同格式转为统一 `ProxyNode` 结构
-4. **节点清洗**: `core/cleaner.ts` 去重、过滤无效节点
-5. **输出**: 统一输出 Clash YAML 格式
+2. **手动代理加载**: `services/subscription.ts` → `loadManualProxies()` 读取 `resources/proxies.yaml`（如存在）
+3. **订阅聚合**: `services/subscription.ts` → `core/aggregator.ts` 并发拉取多个订阅源
+4. **协议解析**: `core/parser/` 下的解析器将不同格式转为统一 `ProxyNode` 结构
+5. **节点清洗**: `core/cleaner.ts` 去重、过滤无效节点
+6. **合并输出**: 手动代理在前，清洗后的订阅节点在后，统一输出 Clash YAML 格式
 
 ### 关键配置
 
 - **订阅源配置**: `resources/sources.yaml` - 配置多个订阅源的 URL、协议类型、标签前缀
+- **手动代理配置**: `resources/proxies.yaml` - 配置本地手动代理节点（可选，不经过清洗，放在订阅节点前面）
 - **环境变量**: 复制 `.env.example` 到 `.env`，必须设置 `JWT_SECRET`
 - **JWT Token 生成**: 开发使用 `pnpm gen:token:dev`，生产使用 `pnpm gen:token`（需先 build）
 
