@@ -68,22 +68,21 @@ install_files() {
     mkdir -p "${install_dir}"
 
     log_info "复制文件..."
-    cp -r "${source_dir}"/.* "${install_dir}/" 2>/dev/null || true
     cp -r "${source_dir}"/* "${install_dir}/" 2>/dev/null || true
+
+    # 显式复制 .env.example 为 .env（如果目标不存在）
+    if [ -f "${source_dir}/.env.example" ] && [ ! -f "${install_dir}/.env" ]; then
+        cp "${source_dir}/.env.example" "${install_dir}/.env"
+        log_info "已创建 .env 文件"
+    fi
 
     # 处理配置文件
     log_info "处理配置文件..."
 
-    # .env.example -> .env
-    if [ -f "${install_dir}/.env.example" ] && [ ! -f "${install_dir}/.env" ]; then
-        mv "${install_dir}/.env.example" "${install_dir}/.env"
-        log_info "已创建 .env 文件（请修改配置）"
-    fi
-
     # resources/sources.yaml.example -> sources.yaml
     if [ -f "${install_dir}/resources/sources.yaml.example" ] && [ ! -f "${install_dir}/resources/sources.yaml" ]; then
         mv "${install_dir}/resources/sources.yaml.example" "${install_dir}/resources/sources.yaml"
-        log_info "已创建 resources/sources.yaml 文件（请修改配置）"
+        log_info "已创建 resources/sources.yaml 文件"
     fi
 
     # 创建日志目录
