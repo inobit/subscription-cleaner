@@ -15,7 +15,7 @@ describe('Auth Middleware', () => {
     const app = createApp();
     const res = await app.request('/protected');
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = await res.json() as { error: string };
     expect(body.error).toContain('未提供认证Token');
   });
 

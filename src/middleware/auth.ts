@@ -25,7 +25,7 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
     // 将payload存入上下文，供后续使用
     c.set('jwtPayload', payload);
     logger.debug('Token验证成功');
-    await next();
+    return await next();
   } catch (error) {
     const message = error instanceof Error ? error.message : '认证失败';
     logger.warn(`Token验证失败: ${message}`);

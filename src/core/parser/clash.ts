@@ -19,11 +19,11 @@ export function parseClash(content: string): ParseResult {
     }
 
     const nodes: ProxyNode[] = config.proxies.map((proxy) => ({
+      ...proxy,
       name: String(proxy.name || ''),
       type: String(proxy.type || ''),
       server: String(proxy.server || ''),
       port: Number(proxy.port || 0),
-      ...proxy,
     }));
 
     return { success: true, nodes };

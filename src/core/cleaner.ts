@@ -40,9 +40,10 @@ export function cleanNodes(nodes: ProxyNode[], config?: CleanConfig): ProxyNode[
 
   // 应用命名模板
   if (config?.nameTemplate) {
+    const template = config.nameTemplate;
     cleaned = cleaned.map((node, index) => ({
       ...node,
-      name: config.nameTemplate.replace('{{index}}', String(index + 1)),
+      name: template.replace('{{index}}', String(index + 1)),
     }));
   }
 
