@@ -1,3 +1,6 @@
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import * as yaml from 'js-yaml';
 import { createChildLogger } from '../utils/logger.ts';
 import { parseClash } from '../core/parser/clash.ts';
 import { parseTrojan } from '../core/parser/trojan.ts';
@@ -111,4 +114,32 @@ export async function aggregateSubscriptions(sources: SubscriptionSource[]): Pro
 
   logger.info(`处理完成，共 ${cleaned.length} 个有效节点`);
   return cleaned;
+}
+
+/**
+ * 加载手动配置的代理节点
+ * @param resourcesDir 资源目录路径
+ * @returns 手动代理节点列表，文件不存在返回空数组
+ */
+export async function loadManualProxies(resourcesDir: string): Promise<ProxyNode[]> {
+  try {
+    const filePath = join(resourcesDir, 'proxies.yaml');
+    const content = await readFile(filePath, 'utf-8');
+    const parsed = yaml.load(content) as { proxies?: ProxyNode[] };
+
+    if (!parsed.proxies || !Array.isArray(parsed.proxies)) {
+      logger.warn('proxies.yaml 中没有找到 proxies 列表');
+      return [];
+    }
+
+    logger.info(`成功加载 ${parsed.proxies.length} 个手动代理节点`);
+    return parsed.proxies;
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') {
+      logger.debug('proxies.yaml 文件不存在，跳过手动代理加载');
+      return [];
+    }
+    logger.error(`加载手动代理失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    return [];
+  }
 }
