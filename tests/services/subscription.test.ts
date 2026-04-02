@@ -39,4 +39,28 @@ proxies:
     expect(result[1].name).toBe('backup');
     expect(result[1].type).toBe('trojan');
   });
+
+  it('should return empty array when file does not exist', async () => {
+    const result = await loadManualProxies('/nonexistent/path');
+    expect(result).toHaveLength(0);
+    expect(result).toEqual([]);
+  });
+
+  it('should return empty array when proxies list is empty', async () => {
+    const yamlContent = 'proxies: []';
+    await writeFile(join(TEST_DIR, 'proxies.yaml'), yamlContent);
+
+    const result = await loadManualProxies(TEST_DIR);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it('should return empty array when YAML is invalid', async () => {
+    const invalidYaml = 'not: valid: yaml: [';
+    await writeFile(join(TEST_DIR, 'proxies.yaml'), invalidYaml);
+
+    const result = await loadManualProxies(TEST_DIR);
+
+    expect(result).toHaveLength(0);
+  });
 });
