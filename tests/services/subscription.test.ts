@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
-import { loadManualProxies } from '../../src/services/subscription';
+import type { ProxyNode, SubscriptionSource } from '../../src/core/types';
+import { loadManualProxies, aggregateSubscriptions } from '../../src/services/subscription';
 
 const TEST_DIR = './test-resources';
 
@@ -62,5 +63,19 @@ proxies:
     const result = await loadManualProxies(TEST_DIR);
 
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('aggregateSubscriptions with manual proxies', () => {
+  it('should put manual proxies before aggregated proxies', async () => {
+    const manualNodes: ProxyNode[] = [
+      { name: 'manual1', type: 'ss', server: '1.1.1.1', port: 443 },
+    ];
+    const sources: SubscriptionSource[] = []; // 空订阅源
+
+    const result = await aggregateSubscriptions(sources, manualNodes);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('manual1');
   });
 });
