@@ -76,7 +76,9 @@ install_files() {
     mkdir -p "${INSTALL_DIR}"
 
     log_info "复制文件..."
-    cp -r "${source_dir}"/* "${INSTALL_DIR}/"
+    # 复制所有文件（包括隐藏文件，如 .env.example）
+    cp -r "${source_dir}"/.* "${INSTALL_DIR}/" 2>/dev/null || true
+    cp -r "${source_dir}"/* "${INSTALL_DIR}/" 2>/dev/null || true
 
     # 重命名 example 文件
     log_info "处理配置文件..."
@@ -107,15 +109,48 @@ install_files() {
     # 创建日志目录
     mkdir -p "${INSTALL_DIR}/logs"
 
-    # 设置权限
+    # 设置权限（只改权限，不改所有者，保持当前用户）
     log_info "设置权限..."
-    chown -R www-data:www-data "${INSTALL_DIR}"
-    chmod 750 "${INSTALL_DIR}"
-    chmod 640 "${INSTALL_DIR}/.env"
+
+    # 安装目录：所有者可读写执行，组和其他用户可读执行
+    chmod 755 "${INSTALL_DIR}"
+
+    # .env 文件：如果存在，设置严格权限（仅所有者可读写）
+    if [ -f "${INSTALL_DIR}/.env" ]; then
+        chmod 600 "${INSTALL_DIR}/.env"
+    fi
+
+    # 日志目录：所有者可读写执行，组和其他用户可读写执行（便于服务写入）
+    chmod 777 "${INSTALL_DIR}/logs"
+
+    # 递归设置文件权限（所有者可读写，组和其他可读）
+    find "${INSTALL_DIR}" -type f -not -path "*/.env" -exec chmod 644 {} \;
+    find "${INSTALL_DIR}" -type d -exec chmod 755 {} \;
+
+    log_info "权限设置完成（所有者保持不变）"
+}
+
+# 安装依赖
+install_dependencies() {
+    log_info "检查 pnpm..."
+    if ! command -v pnpm &> /dev/null; then
+        log_warn "pnpm 未安装，正在安装..."
+        if command -v npm &> /dev/null; then
+            npm install -g pnpm
+        else
+            log_error "npm 未安装，无法自动安装 pnpm"
+            exit 1
+        fi
+    fi
+
+    log_info "安装依赖..."
+    cd "${INSTALL_DIR}"
+    pnpm install --prod
+    log_info "依赖安装完成"
 }
 
 # 安装 systemd 服务
-install_service() {
+install_systemd_service() {
     log_info "安装 systemd 服务..."
     # 使用软链接，方便后续修改
     ln -sf "${INSTALL_DIR}/tools/subscription-cleaner.service" "/etc/systemd/system/${SERVICE_NAME}.service"
@@ -155,7 +190,18 @@ show_next_steps() {
     echo "   - 放在订阅节点前面"
     echo "   - 即使订阅源为空也会返回"
     echo ""
-    echo "4. 检查服务配置（可选）:"
+    echo "4. 创建运行用户（推荐）:"
+    echo "   # 创建专用运行用户（例如 appuser）"
+    echo "   sudo useradd --system --user-group --shell /usr/sbin/nologin appuser"
+    echo ""
+    echo "   # 然后修改 service 文件中的 User 和 Group:"
+    echo "   nano ${INSTALL_DIR}/tools/subscription-cleaner.service"
+    echo "   # 修改: User=appuser, Group=appuser"
+    echo "   sudo systemctl daemon-reload"
+    echo ""
+    echo "   # 如不使用专用用户，保持 root 运行，跳过此步"
+    echo ""
+    echo "5. 检查服务配置（可选）:"
     echo "   nano ${INSTALL_DIR}/tools/subscription-cleaner.service"
     echo ""
     echo "   如需修改用户或路径，编辑后执行:"
@@ -200,11 +246,14 @@ main() {
     # 安装文件
     install_files "${TEMP_SOURCE_DIR}"
 
+    # 安装依赖
+    install_dependencies
+
     # 清理临时文件
     rm -rf "${TEMP_BASE_DIR}"
 
     # 安装服务
-    install_service
+    install_systemd_service
 
     # 显示后续步骤
     show_next_steps

@@ -4,10 +4,16 @@ After=network.target
 
 [Service]
 Type=simple
-# TODO: 修改为实际运行用户
-User=www-data
-Group=www-data
-# TODO: 修改为实际部署路径
+# 运行用户设置（二选一）：
+# 方案1: 使用 root 运行（简单但不推荐）
+# User=root
+# Group=root
+
+# 方案2: 使用专用用户运行（推荐，需先创建用户）
+# 创建用户: sudo useradd --system --user-group --shell /usr/sbin/nologin appuser
+# User=appuser
+# Group=appuser
+
 WorkingDirectory=/opt/subscription-cleaner
 ExecStart=/usr/bin/node dist/index.js
 Restart=on-failure
