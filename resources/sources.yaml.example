@@ -1,0 +1,24 @@
+# 订阅源配置示例
+# 复制此文件为 sources.yaml 并根据实际情况修改
+
+sources:
+  - tag: '订阅A'
+    url: 'https://example.com/subscribe/clash'
+    protocol: 'clash'
+    enabled: true
+    prefix: 'A-' # 节点名称前缀（可选，默认使用tag）
+    cacheEnabled: true # 启用缓存（可选，默认false）
+    cacheTtlDays: 7 # 缓存天数（可选，默认30天）
+
+  - tag: '订阅B'
+    url: 'https://example.com/subscribe/trojan'
+    protocol: 'trojan'
+    enabled: false
+    prefix: 'B-'
+    cacheEnabled: true
+
+  - tag: '订阅C'
+    url: 'https://example.com/subscribe/ss'
+    protocol: 'ss'
+    enabled: false
+    cacheEnabled: true

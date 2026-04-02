@@ -3,16 +3,10 @@
 
 sources:
   - tag: "订阅A"
-    url: "https://example.com/subscribe/clash"
+    from: "https://v2.fastlink-aff02.com/user"
+    url: "https://10ncydlf.flsubcn.cc:2096/zvlqjih1t/03sbkrfeccbopfzf?clash=1&extend=1"
     protocol: "clash"
     enabled: true
-
-  - tag: "订阅B"
-    url: "https://example.com/subscribe/trojan"
-    protocol: "trojan"
-    enabled: true
-
-  - tag: "订阅C"
-    url: "https://example.com/subscribe/ss"
-    protocol: "ss"
-    enabled: false
+    prefix: "Master" # 节点名称前缀（可选，默认使用tag）
+    cacheEnabled: true # 启用缓存（可选，默认false）
+    cacheTtlDays: 999 # 缓存天数（可选，默认30天）
