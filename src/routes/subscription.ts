@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import * as yaml from 'js-yaml';
-import { aggregateSubscriptions } from '../services/subscription.ts';
+import { aggregateSubscriptions, loadManualProxies } from '../services/subscription.ts';
 import { authMiddleware } from '../middleware/auth.ts';
 import { createChildLogger } from '../utils/logger.ts';
 import type { SubscriptionSource } from '../core/types.ts';
@@ -37,11 +37,13 @@ subscriptionRouter.get('/', async (c) => {
   logger.info('收到订阅请求');
 
   const sources = await loadSources();
-  if (sources.length === 0) {
-    return c.json({ error: '没有可用的订阅源配置' }, 500);
+  const manualNodes = await loadManualProxies(config.resourcesDir);
+
+  if (sources.length === 0 && manualNodes.length === 0) {
+    return c.json({ error: '没有可用的订阅源配置或手动代理' }, 500);
   }
 
-  const nodes = await aggregateSubscriptions(sources);
+  const nodes = await aggregateSubscriptions(sources, manualNodes);
   if (nodes.length === 0) {
     return c.json({ error: '没有可用的节点' }, 503);
   }
