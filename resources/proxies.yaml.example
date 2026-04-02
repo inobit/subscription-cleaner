@@ -1,0 +1,17 @@
+# 手动代理配置
+# 复制此文件为 proxies.yaml 并填写实际代理信息
+# 这些代理不会经过清洗，会放在订阅代理前面
+
+proxies:
+  # - name: hotfree
+  #   type: ss
+  #   server: your-server.com
+  #   port: 443
+  #   cipher: aes-256-gcm
+  #   password: your-password
+  #
+  # - name: backup-proxy
+  #   type: trojan
+  #   server: backup-server.com
+  #   port: 443
+  #   password: your-password
