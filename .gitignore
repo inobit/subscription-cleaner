@@ -29,6 +29,13 @@ Thumbs.db
 # Test coverage
 coverage/
 
+# Documentation
+docs/
+
+# Claude rules (忽略文件但保留目录)
+.claude/rules/*
+!.claude/rules/.gitkeep
+
 # Resources (生产环境配置)
 resources/*.yaml
 !resources/sources.yaml.example
