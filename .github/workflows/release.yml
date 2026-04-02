@@ -52,6 +52,9 @@ jobs:
           # 复制构建产物
           cp -r dist release/subscription-cleaner/
 
+          # 复制 package.json 和 lock 文件（用于服务器安装依赖）
+          cp package.json pnpm-lock.yaml release/subscription-cleaner/
+
           # 复制配置文件示例
           cp .env.example release/subscription-cleaner/
           cp -r resources release/subscription-cleaner/
