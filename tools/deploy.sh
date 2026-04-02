@@ -47,20 +47,25 @@ get_latest_release() {
 download_release() {
     local version=$1
     local url="https://github.com/${REPO}/releases/download/${version}/subscription-cleaner-${version}.tar.gz"
-    local temp_dir=$(mktemp -d)
-    local archive="${temp_dir}/subscription-cleaner.tar.gz"
+    TEMP_BASE_DIR=$(mktemp -d)
+    local archive="${TEMP_BASE_DIR}/subscription-cleaner.tar.gz"
 
     log_info "下载 release: ${url}"
     if ! curl -L -o "${archive}" "${url}"; then
         log_error "下载失败"
-        rm -rf "${temp_dir}"
+        rm -rf "${TEMP_BASE_DIR}"
         exit 1
     fi
 
     log_info "解压到临时目录..."
-    tar -xzf "${archive}" -C "${temp_dir}"
+    tar -xzf "${archive}" -C "${TEMP_BASE_DIR}"
 
-    echo "${temp_dir}"
+    # 处理可能的子目录结构
+    if [ -d "${TEMP_BASE_DIR}/subscription-cleaner" ]; then
+        TEMP_SOURCE_DIR="${TEMP_BASE_DIR}/subscription-cleaner"
+    else
+        TEMP_SOURCE_DIR="${TEMP_BASE_DIR}"
+    fi
 }
 
 # 安装文件
@@ -86,6 +91,11 @@ install_files() {
     if [ -f "${INSTALL_DIR}/resources/sources.yaml.example" ]; then
         mv "${INSTALL_DIR}/resources/sources.yaml.example" "${INSTALL_DIR}/resources/sources.yaml"
         log_info "已创建 resources/sources.yaml 文件（请修改配置）"
+    fi
+
+    # resources/proxies.yaml.example 保留示例
+    if [ -f "${INSTALL_DIR}/resources/proxies.yaml.example" ]; then
+        log_info "resources/proxies.yaml.example 已保留（如需要手动代理，请复制并修改）"
     fi
 
     # tools/subscription-cleaner.service.example -> tools/subscription-cleaner.service
@@ -136,7 +146,16 @@ show_next_steps() {
     echo "   - 添加你的实际订阅源 URL"
     echo "   - 设置正确的 protocol 类型"
     echo ""
-    echo "3. 检查服务配置（可选）:"
+    echo "3. 配置手动代理（可选）:"
+    echo "   cp ${INSTALL_DIR}/resources/proxies.yaml.example ${INSTALL_DIR}/resources/proxies.yaml"
+    echo "   nano ${INSTALL_DIR}/resources/proxies.yaml"
+    echo ""
+    echo "   手动代理特点:"
+    echo "   - 不经过清洗流程"
+    echo "   - 放在订阅节点前面"
+    echo "   - 即使订阅源为空也会返回"
+    echo ""
+    echo "4. 检查服务配置（可选）:"
     echo "   nano ${INSTALL_DIR}/tools/subscription-cleaner.service"
     echo ""
     echo "   如需修改用户或路径，编辑后执行:"
@@ -175,14 +194,14 @@ main() {
     # 获取最新版本
     get_latest_release
 
-    # 下载并解压
-    TEMP_DIR=$(download_release "${LATEST_VERSION}")
+    # 下载并解压（使用全局变量 TEMP_SOURCE_DIR 和 TEMP_BASE_DIR）
+    download_release "${LATEST_VERSION}"
 
     # 安装文件
-    install_files "${TEMP_DIR}"
+    install_files "${TEMP_SOURCE_DIR}"
 
     # 清理临时文件
-    rm -rf "${TEMP_DIR}"
+    rm -rf "${TEMP_BASE_DIR}"
 
     # 安装服务
     install_service
