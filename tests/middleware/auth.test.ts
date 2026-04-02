@@ -1,0 +1,45 @@
+import { describe, it, expect } from 'vitest';
+import { Hono } from 'hono';
+import { authMiddleware } from '../../src/middleware/auth.ts';
+import { generateToken } from '../../src/utils/jwt.ts';
+
+describe('Auth Middleware', () => {
+  const createApp = () => {
+    const app = new Hono();
+    app.use('/protected', authMiddleware);
+    app.get('/protected', (c) => c.json({ message: 'success' }));
+    return app;
+  };
+
+  it('应拒绝无Token的请求', async () => {
+    const app = createApp();
+    const res = await app.request('/protected');
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error).toContain('未提供认证Token');
+  });
+
+  it('应接受有效的Bearer Token', async () => {
+    const app = createApp();
+    const token = generateToken();
+    const res = await app.request('/protected', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('应接受有效的Query Token', async () => {
+    const app = createApp();
+    const token = generateToken();
+    const res = await app.request(`/protected?token=${token}`);
+    expect(res.status).toBe(200);
+  });
+
+  it('应拒绝无效的Token', async () => {
+    const app = createApp();
+    const res = await app.request('/protected', {
+      headers: { Authorization: 'Bearer invalid-token' },
+    });
+    expect(res.status).toBe(401);
+  });
+});
