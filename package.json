@@ -1,0 +1,36 @@
+{
+  "name": "subscription-cleaner",
+  "version": "1.0.0",
+  "description": "订阅节点清洗服务",
+  "type": "module",
+  "scripts": {
+    "dev": "vite-node src/index.ts",
+    "build": "vite build",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "keywords": ["subscription", "proxy", "clash"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11",
+    "vite-node": "^1.1.0",
+    "vitest": "^1.2.0"
+  },
+  "dependencies": {
+    "hono": "^3.12.0",
+    "js-yaml": "^4.1.0",
+    "pino": "^8.17.0",
+    "pino-pretty": "^10.3.0"
+  }
+}
