@@ -37,6 +37,12 @@ export interface SubscriptionSource {
   protocol: 'clash' | 'trojan' | 'ss';
   /** 是否启用 */
   enabled: boolean;
+  /** 节点名称前缀（优先级高于tag） */
+  prefix?: string;
+  /** 是否启用缓存 */
+  cacheEnabled?: boolean;
+  /** 缓存时间（天），默认30天 */
+  cacheTtlDays?: number;
 }
 
 /**

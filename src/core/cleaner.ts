@@ -25,12 +25,7 @@ function deduplicateByServer(nodes: ProxyNode[]): ProxyNode[] {
 export function cleanNodes(nodes: ProxyNode[], config?: CleanConfig): ProxyNode[] {
   // 过滤无效节点
   let cleaned = nodes.filter((node) => {
-    return (
-      node.name &&
-      node.server &&
-      node.port > 0 &&
-      node.port <= 65535
-    );
+    return node.name && node.server && node.port > 0 && node.port <= 65535;
   });
 
   // 去重

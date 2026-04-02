@@ -1,4 +1,8 @@
 import type { AppConfig } from './core/types.ts';
+import dotenv from 'dotenv';
+
+// 加载 .env 文件
+dotenv.config();
 
 /**
  * 从环境变量读取配置
