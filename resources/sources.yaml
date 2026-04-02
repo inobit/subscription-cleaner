@@ -1,0 +1,18 @@
+# 订阅源配置
+# 生产环境应将此文件放入 RESOURCES_DIR 目录
+
+sources:
+  - tag: "订阅A"
+    url: "https://example.com/subscribe/clash"
+    protocol: "clash"
+    enabled: true
+
+  - tag: "订阅B"
+    url: "https://example.com/subscribe/trojan"
+    protocol: "trojan"
+    enabled: true
+
+  - tag: "订阅C"
+    url: "https://example.com/subscribe/ss"
+    protocol: "ss"
+    enabled: false
