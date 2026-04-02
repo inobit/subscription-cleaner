@@ -52,7 +52,7 @@ pnpm gen:token
 ### 一键部署（推荐）
 
 ```bash
-curl -fsSL https://github.com/inobit/subscription-cleaner/releases/latest/download/deploy.sh | sudo bash
+curl -fsSL https://github.com/inobit/subscription-cleaner/releases/latest/download/deploy.sh | bash
 ```
 
 部署完成后，按提示修改配置文件，然后启动服务。
