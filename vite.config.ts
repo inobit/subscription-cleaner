@@ -3,6 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
+    ssr: true,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es'],
