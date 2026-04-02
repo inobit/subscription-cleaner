@@ -3,14 +3,13 @@ set -e
 
 # 配置
 REPO="inobit/subscription-cleaner"
-INSTALL_DIR="/opt/subscription-cleaner"
-SERVICE_NAME="subscription-cleaner"
+DEFAULT_INSTALL_DIR="${HOME}/subscription-cleaner"
 
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
@@ -22,14 +21,6 @@ log_warn() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# 检查 root 权限
-check_root() {
-    if [ "$EUID" -ne 0 ]; then
-        log_error "请使用 sudo 运行此脚本"
-        exit 1
-    fi
 }
 
 # 获取最新 release 版本
@@ -71,192 +62,147 @@ download_release() {
 # 安装文件
 install_files() {
     local source_dir=$1
+    local install_dir=$2
 
-    log_info "创建安装目录: ${INSTALL_DIR}"
-    mkdir -p "${INSTALL_DIR}"
+    log_info "创建安装目录: ${install_dir}"
+    mkdir -p "${install_dir}"
 
     log_info "复制文件..."
-    # 复制所有文件（包括隐藏文件，如 .env.example）
-    cp -r "${source_dir}"/.* "${INSTALL_DIR}/" 2>/dev/null || true
-    cp -r "${source_dir}"/* "${INSTALL_DIR}/" 2>/dev/null || true
+    cp -r "${source_dir}"/.* "${install_dir}/" 2>/dev/null || true
+    cp -r "${source_dir}"/* "${install_dir}/" 2>/dev/null || true
 
-    # 重命名 example 文件
+    # 处理配置文件
     log_info "处理配置文件..."
 
     # .env.example -> .env
-    if [ -f "${INSTALL_DIR}/.env.example" ]; then
-        mv "${INSTALL_DIR}/.env.example" "${INSTALL_DIR}/.env"
+    if [ -f "${install_dir}/.env.example" ] && [ ! -f "${install_dir}/.env" ]; then
+        mv "${install_dir}/.env.example" "${install_dir}/.env"
         log_info "已创建 .env 文件（请修改配置）"
     fi
 
-    # resources/sources.yaml.example -> resources/sources.yaml
-    if [ -f "${INSTALL_DIR}/resources/sources.yaml.example" ]; then
-        mv "${INSTALL_DIR}/resources/sources.yaml.example" "${INSTALL_DIR}/resources/sources.yaml"
+    # resources/sources.yaml.example -> sources.yaml
+    if [ -f "${install_dir}/resources/sources.yaml.example" ] && [ ! -f "${install_dir}/resources/sources.yaml" ]; then
+        mv "${install_dir}/resources/sources.yaml.example" "${install_dir}/resources/sources.yaml"
         log_info "已创建 resources/sources.yaml 文件（请修改配置）"
     fi
 
-    # resources/proxies.yaml.example 保留示例
-    if [ -f "${INSTALL_DIR}/resources/proxies.yaml.example" ]; then
-        log_info "resources/proxies.yaml.example 已保留（如需要手动代理，请复制并修改）"
-    fi
-
-    # tools/subscription-cleaner.service.example -> tools/subscription-cleaner.service
-    if [ -f "${INSTALL_DIR}/tools/subscription-cleaner.service.example" ]; then
-        mv "${INSTALL_DIR}/tools/subscription-cleaner.service.example" "${INSTALL_DIR}/tools/subscription-cleaner.service"
-        log_info "已创建 tools/subscription-cleaner.service 文件（请检查配置）"
-    fi
-
     # 创建日志目录
-    mkdir -p "${INSTALL_DIR}/logs"
+    mkdir -p "${install_dir}/logs"
 
-    # 设置权限（只改权限，不改所有者，保持当前用户）
-    log_info "设置权限..."
-
-    # 安装目录：所有者可读写执行，组和其他用户可读执行
-    chmod 755 "${INSTALL_DIR}"
-
-    # .env 文件：如果存在，设置严格权限（仅所有者可读写）
-    if [ -f "${INSTALL_DIR}/.env" ]; then
-        chmod 600 "${INSTALL_DIR}/.env"
-    fi
-
-    # 日志目录：所有者可读写执行，组和其他用户可读写执行（便于服务写入）
-    chmod 777 "${INSTALL_DIR}/logs"
-
-    # 递归设置文件权限（所有者可读写，组和其他可读）
-    find "${INSTALL_DIR}" -type f -not -path "*/.env" -exec chmod 644 {} \;
-    find "${INSTALL_DIR}" -type d -exec chmod 755 {} \;
-
-    log_info "权限设置完成（所有者保持不变）"
+    log_info "文件安装完成"
 }
 
 # 安装依赖
 install_dependencies() {
+    local install_dir=$1
+
     log_info "检查 pnpm..."
     if ! command -v pnpm &> /dev/null; then
-        log_warn "pnpm 未安装，正在安装..."
-        if command -v npm &> /dev/null; then
-            npm install -g pnpm
-        else
-            log_error "npm 未安装，无法自动安装 pnpm"
-            exit 1
-        fi
+        log_warn "pnpm 未安装"
+        echo ""
+        echo "请安装 pnpm："
+        echo "  npm install -g pnpm"
+        echo ""
+        exit 1
     fi
 
     log_info "安装依赖..."
-    cd "${INSTALL_DIR}"
+    cd "${install_dir}"
     pnpm install --prod
     log_info "依赖安装完成"
 }
 
-# 安装 systemd 服务
-install_systemd_service() {
-    log_info "安装 systemd 服务..."
-    # 使用软链接，方便后续修改
-    ln -sf "${INSTALL_DIR}/tools/subscription-cleaner.service" "/etc/systemd/system/${SERVICE_NAME}.service"
-    systemctl daemon-reload
-    log_info "服务已安装到 systemd（软链接）"
-}
-
 # 显示后续步骤
 show_next_steps() {
+    local install_dir=$1
+
     echo ""
     echo "=========================================="
-    echo -e "${GREEN}部署完成！${NC}"
+    echo -e "${GREEN}安装完成！${NC}"
     echo "=========================================="
     echo ""
-    log_warn "请先修改以下配置文件后再启动服务："
+    echo "安装目录: ${install_dir}"
     echo ""
-    echo "1. 编辑环境变量文件:"
-    echo "   nano ${INSTALL_DIR}/.env"
+    log_warn "请修改以下配置文件："
+    echo ""
+    echo "1. 编辑环境变量:"
+    echo "   nano ${install_dir}/.env"
     echo ""
     echo "   必须修改:"
     echo "   - JWT_SECRET: 设置为强密码"
-    echo "   - PORT: 根据需要修改（默认3000）"
     echo ""
     echo "2. 编辑订阅源配置:"
-    echo "   nano ${INSTALL_DIR}/resources/sources.yaml"
+    echo "   nano ${install_dir}/resources/sources.yaml"
     echo ""
     echo "   必须修改:"
     echo "   - 添加你的实际订阅源 URL"
-    echo "   - 设置正确的 protocol 类型"
     echo ""
     echo "3. 配置手动代理（可选）:"
-    echo "   cp ${INSTALL_DIR}/resources/proxies.yaml.example ${INSTALL_DIR}/resources/proxies.yaml"
-    echo "   nano ${INSTALL_DIR}/resources/proxies.yaml"
+    echo "   cp ${install_dir}/resources/proxies.yaml.example ${install_dir}/resources/proxies.yaml"
     echo ""
-    echo "   手动代理特点:"
-    echo "   - 不经过清洗流程"
-    echo "   - 放在订阅节点前面"
-    echo "   - 即使订阅源为空也会返回"
+    echo "=========================================="
+    echo "启动服务:"
+    echo "=========================================="
     echo ""
-    echo "4. 创建运行用户（推荐）:"
-    echo "   # 创建专用运行用户（例如 appuser）"
-    echo "   sudo useradd --system --user-group --shell /usr/sbin/nologin appuser"
+    echo "方式1 - 直接运行（适合测试）:"
+    echo "   cd ${install_dir}"
+    echo "   pnpm start"
     echo ""
-    echo "   # 然后修改 service 文件中的 User 和 Group:"
-    echo "   nano ${INSTALL_DIR}/tools/subscription-cleaner.service"
-    echo "   # 修改: User=appuser, Group=appuser"
-    echo "   sudo systemctl daemon-reload"
+    echo "方式2 - 安装为 systemd 服务（适合生产）:"
+    echo "   1. 查看服务模板:"
+    echo "      cat ${install_dir}/tools/subscription-cleaner.service.example"
     echo ""
-    echo "   # 如不使用专用用户，保持 root 运行，跳过此步"
+    echo "   2. 复制并编辑服务文件:"
+    echo "      sudo cp ${install_dir}/tools/subscription-cleaner.service.example /etc/systemd/system/subscription-cleaner.service"
+    echo "      sudo nano /etc/systemd/system/subscription-cleaner.service"
     echo ""
-    echo "5. 检查服务配置（可选）:"
-    echo "   nano ${INSTALL_DIR}/tools/subscription-cleaner.service"
+    echo "   3. 重要：根据你的安装目录修改以下配置:"
+    echo "      - WorkingDirectory=${install_dir}"
+    echo "      - User=$(whoami)"
+    echo "      - Group=$(whoami)"
     echo ""
-    echo "   如需修改用户或路径，编辑后执行:"
-    echo "   sudo systemctl daemon-reload"
-    echo "   sudo systemctl restart ${SERVICE_NAME}"
-    echo ""
-    echo "配置完成后，使用以下命令启动服务："
-    echo ""
-    echo "  # 启动服务"
-    echo "  sudo systemctl start ${SERVICE_NAME}"
-    echo ""
-    echo "  # 查看状态"
-    echo "  sudo systemctl status ${SERVICE_NAME}"
-    echo ""
-    echo "  # 查看日志"
-    echo "  sudo journalctl -u ${SERVICE_NAME} -f"
-    echo ""
-    echo "  # 设置开机自启"
-    echo "  sudo systemctl enable ${SERVICE_NAME}"
+    echo "   4. 启动服务:"
+    echo "      sudo systemctl daemon-reload"
+    echo "      sudo systemctl start subscription-cleaner"
+    echo "      sudo systemctl enable subscription-cleaner"
     echo ""
 }
 
 # 主函数
 main() {
+    local install_dir="${1:-$DEFAULT_INSTALL_DIR}"
+
     echo "=========================================="
-    echo "Subscription Cleaner 部署脚本"
+    echo "Subscription Cleaner 安装脚本"
     echo "=========================================="
     echo ""
 
-    check_root
+    # 检查依赖
+    if ! command -v curl &> /dev/null; then
+        log_error "需要安装 curl"
+        exit 1
+    fi
 
-    log_info "仓库: ${REPO}"
-    log_info "安装目录: ${INSTALL_DIR}"
+    log_info "安装目录: ${install_dir}"
     echo ""
 
     # 获取最新版本
     get_latest_release
 
-    # 下载并解压（使用全局变量 TEMP_SOURCE_DIR 和 TEMP_BASE_DIR）
+    # 下载并解压
     download_release "${LATEST_VERSION}"
 
     # 安装文件
-    install_files "${TEMP_SOURCE_DIR}"
-
-    # 安装依赖
-    install_dependencies
+    install_files "${TEMP_SOURCE_DIR}" "${install_dir}"
 
     # 清理临时文件
     rm -rf "${TEMP_BASE_DIR}"
 
-    # 安装服务
-    install_systemd_service
+    # 安装依赖
+    install_dependencies "${install_dir}"
 
     # 显示后续步骤
-    show_next_steps
+    show_next_steps "${install_dir}"
 }
 
 main "$@"
