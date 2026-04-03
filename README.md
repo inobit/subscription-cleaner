@@ -62,17 +62,24 @@ curl -fsSL https://github.com/inobit/subscription-cleaner/releases/latest/downlo
 ```bash
 # 下载最新 release
 wget https://github.com/inobit/subscription-cleaner/releases/latest/download/subscription-cleaner-v1.x.x.tar.gz
-tar -xzf subscription-cleaner-v1.x.x.tar.gz -C /opt/
+tar -xzf subscription-cleaner-v1.x.x.tar.gz -C /<path>/
 
 # 配置
-cd /opt/subscription-cleaner
+cd /<path>/subscription-cleaner
 cp .env.example .env
 cp resources/sources.yaml.example resources/sources.yaml
 cp resources/proxies.yaml.example resources/proxies.yaml  # 可选：手动代理
-# 编辑配置文件
+# 编辑以上配置文件
 
-# 安装 systemd 服务
-sudo ln -sf /opt/subscription-cleaner/tools/subscription-cleaner.service /etc/systemd/system/
+# 安装依赖
+pnpm install --production
+
+# 启动
+pnpm start
+
+# 安装 systemd 服务（可选）
+# 修改服务working directory, ExecStart, User, Group等等选项(必须)
+sudo ln -sf /<path>/subscription-cleaner/tools/subscription-cleaner.service /etc/systemd/system/subscription-cleaner.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now subscription-cleaner
 ```
