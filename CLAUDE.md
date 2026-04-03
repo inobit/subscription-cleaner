@@ -48,7 +48,7 @@ pnpm gen:token
 ### 技术栈
 
 - **框架**: Hono (轻量级 Web 框架)
-- **运行时**: Node.js 20+
+- **运行时**: Node.js 24+
 - **语言**: TypeScript (ES2022, ES Modules)
 - **构建**: Vite (SSR 模式，保留模块结构)
 - **测试**: Vitest
@@ -109,6 +109,7 @@ pnpm gen:token
 ### 测试结构
 
 测试文件与源码结构对应：
+
 - `tests/core/parser/*.test.ts` - 解析器单元测试
 - `tests/middleware/auth.test.ts` - 认证中间件测试
 - 使用 Vitest，支持 `describe`/`it`/`expect` 语法
