@@ -1,6 +1,7 @@
 {
   "name": "subscription-cleaner",
   "version": "1.1.0",
+  "packageManager": "pnpm@10.26.1",
   "description": "订阅节点清洗服务",
   "type": "module",
   "scripts": {
