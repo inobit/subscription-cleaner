@@ -1,0 +1,13 @@
+name = "subscription-cleaner"
+main = "src/worker.ts"
+compatibility_date = "2024-04-01"
+
+[[kv_namespaces]]
+binding = "SUBSCRIPTION_KV"
+id = "5e66bf2d61894f0f82b11d5390b0e7c0"
+
+[vars]
+LOG_LEVEL = "info"
+
+# JWT_SECRET 通过 Dashboard 设置，不要提交到 git
+
