@@ -1,6 +1,6 @@
-# 订阅节点清洗服务
+# 订阅节点清洗服务 (Cloudflare Workers 版本)
 
-基于 Hono + TypeScript 的订阅节点清洗服务，支持 JWT 认证和多格式订阅解析。
+基于 Hono + TypeScript 的订阅节点清洗服务，部署在 Cloudflare Workers 上，支持 JWT 认证和多格式订阅解析。
 
 ## 功能特性
 
@@ -8,8 +8,8 @@
 - 📡 多格式订阅解析（Clash YAML / Trojan / Shadowsocks）
 - 🧹 节点清洗（去重、过滤无效节点）
 - 🏷️ 自动标签前缀
-- 📝 手动代理配置（支持本地 YAML 文件，不经过清洗）
-- 📝 结构化日志（Pino）
+- 📝 手动代理配置（通过 KV 存储配置）
+- 🚀 Cloudflare Workers 部署，全球边缘节点加速
 - 🧪 完整单元测试覆盖
 
 ## 快速开始
@@ -20,76 +20,54 @@
 # 安装依赖
 pnpm install
 
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件，设置 JWT_SECRET
-
-# 配置订阅源
-cp resources/sources.yaml.example resources/sources.yaml
-# 编辑 resources/sources.yaml 配置订阅源
-
-# 配置手动代理（可选）
-cp resources/proxies.yaml.example resources/proxies.yaml
-# 编辑 resources/proxies.yaml 添加手动代理节点
-
-# 开发模式启动
+# 本地开发（Wrangler 模拟 Workers 环境）
 pnpm dev
 ```
+
+### 配置
+
+Worker 使用 KV 存储配置，需要在 Cloudflare Dashboard 中设置：
+
+1. **创建 KV 命名空间**：在 Cloudflare Dashboard → Workers → KV 中创建
+2. **绑定 KV**：在 `wrangler.toml` 中配置 KV 绑定：
+   ```toml
+   [[kv_namespaces]]
+   binding = "SUBSCRIPTION_KV"
+   id = "your-kv-namespace-id"
+   ```
+3. **设置 JWT_SECRET**：在 Dashboard → Workers → 你的 Worker → Settings → Variables 中添加
+4. **配置订阅源**：通过 KV 存储配置（键名：`sources`）
+5. **配置手动代理**：通过 KV 存储配置（键名：`proxies`，可选）
 
 ### 生成 JWT Token
 
 ```bash
-# 开发模式
-pnpm gen:token:dev
+# 设置 JWT_SECRET 环境变量
+export JWT_SECRET="your-secret-key"
 
-# 生产模式（需先构建）
-pnpm build
+# 生成 Token
 pnpm gen:token
 ```
 
 ## 部署
 
-### 一键部署（推荐）
+### Cloudflare Workers Git 集成（推荐）
 
-```bash
-curl -fsSL https://github.com/inobit/subscription-cleaner/releases/latest/download/deploy.sh | bash
-```
-
-部署完成后，按提示修改配置文件，然后启动服务。
+1. 在 Cloudflare Dashboard → Workers → Pages 中连接 GitHub 仓库
+2. 选择 `worker` 分支
+3. 配置构建和部署：
+   - **构建命令**：`pnpm install`
+   - **部署命令**：`npx wrangler deploy`
+4. 设置环境变量和 KV 绑定
 
 ### 手动部署
 
 ```bash
-# 下载最新 release
-wget https://github.com/inobit/subscription-cleaner/releases/latest/download/subscription-cleaner-v1.x.x.tar.gz
-tar -xzf subscription-cleaner-v1.x.x.tar.gz -C /<path>/
+# 登录 Cloudflare
+wrangler login
 
-# 配置
-cd /<path>/subscription-cleaner
-cp .env.example .env
-cp resources/sources.yaml.example resources/sources.yaml
-cp resources/proxies.yaml.example resources/proxies.yaml  # 可选：手动代理
-# 编辑以上配置文件
-
-# 安装依赖
-pnpm install --production
-
-# 启动
-pnpm start
-
-# 安装 systemd 服务（可选）
-# 修改服务working directory, ExecStart, User, Group等等选项(必须)
-sudo ln -sf /<path>/subscription-cleaner/tools/subscription-cleaner.service /etc/systemd/system/subscription-cleaner.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now subscription-cleaner
-```
-
-### 构建 Release
-
-```bash
-# 推送标签触发 GitHub Actions 构建
-git tag v1.0.0
-git push origin v1.0.0
+# 部署
+pnpm deploy
 ```
 
 ## API 文档
@@ -133,47 +111,59 @@ GET /subscription/raw?token=<token>
 ## 项目结构
 
 ```
-├── src/              # 源码
-├── tests/            # 单元测试
-├── resources/        # 运行时配置
-│   ├── sources.yaml           # 订阅源配置
-│   ├── sources.yaml.example   # 订阅源示例
-│   ├── proxies.yaml           # 手动代理配置（可选）
-│   └── proxies.yaml.example   # 手动代理示例
-├── tools/            # 部署工具（deploy.sh、systemd 服务）
-├── scripts/          # 应用脚本（generate-token）
-└── dist/             # 构建产物
+├── src/
+│   ├── worker.ts              # Worker 入口
+│   ├── config-worker.ts       # Worker 配置
+│   ├── core/                  # 核心逻辑（parser, aggregator, cleaner）
+│   ├── routes/                # 路由（subscription-worker）
+│   ├── services/              # 服务层（subscription-worker, shared）
+│   ├── storage/               # KV 存储适配器
+│   ├── utils/                 # 工具（jwt-worker, logger-worker）
+│   └── middleware/            # 中间件（auth-worker, request-log）
+├── tests/                     # 单元测试
+├── wrangler.toml              # Workers 配置
+└── scripts/                   # 应用脚本（generate-token）
 ```
 
 ## 配置说明
 
-### 订阅源配置 (resources/sources.yaml)
+### 订阅源配置 (KV: config:sources)
 
-配置远程订阅源：
+通过 KV 存储配置订阅源，键名为 `config:sources`，存储格式为：
 
-```yaml
-sources:
-  - tag: '订阅A'
-    url: 'https://example.com/subscription'
-    protocol: 'clash'
-    enabled: true
-    prefix: 'Master'
-    cacheEnabled: true
-    cacheTtlDays: 30
+```json
+{
+  "sources": [
+    {
+      "tag": "订阅A",
+      "url": "https://example.com/subscription",
+      "protocol": "clash",
+      "enabled": true,
+      "prefix": "Master",
+      "cacheEnabled": true,
+      "cacheTtlDays": 30
+    }
+  ]
+}
 ```
 
-### 手动代理配置 (resources/proxies.yaml)
+### 手动代理配置 (KV: config:proxies)
 
-配置本地手动代理节点（不经过清洗，放在订阅节点前面）：
+通过 KV 存储配置手动代理节点，键名为 `config:proxies`，存储格式为：
 
-```yaml
-proxies:
-  - name: your-server
-    type: ss
-    server: your-server.com
-    port: 443
-    cipher: aes-256-gcm
-    password: your-password
+```json
+{
+  "proxies": [
+    {
+      "name": "your-server",
+      "type": "ss",
+      "server": "your-server.com",
+      "port": 443,
+      "cipher": "aes-256-gcm",
+      "password": "your-password"
+    }
+  ]
+}
 ```
 
 特点：
@@ -182,17 +172,37 @@ proxies:
 - 放在订阅节点前面
 - 即使订阅源为空也会返回
 
+### wrangler.toml 配置
+
+```toml
+name = "subscription-cleaner"
+main = "src/worker.ts"
+compatibility_date = "2024-04-01"
+
+[[kv_namespaces]]
+binding = "SUBSCRIPTION_KV"
+id = "your-kv-namespace-id"
+
+[vars]
+LOG_LEVEL = "info"
+
+# JWT_SECRET 在 Dashboard 中设置，不要提交到 git
+```
+
 ## 常用命令
 
 ```bash
-# 开发
+# 本地开发
 pnpm dev
+
+# 部署
+pnpm deploy
+
+# 生成 Workers 类型
+pnpm cf:typegen
 
 # 测试
 pnpm test
-
-# 构建
-pnpm build
 
 # 代码检查
 pnpm lint
