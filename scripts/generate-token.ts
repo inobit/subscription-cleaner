@@ -4,7 +4,7 @@
  * 用法: npm run gen:token [有效期月数]
  */
 
-import { generateToken } from '../src/utils/jwt-worker.js';
+import { generateToken } from '../src/utils/jwt-worker.ts';
 
 // 获取有效期参数（默认为3个月）
 const months = parseInt(process.argv[2] || '3', 10);
