@@ -5,16 +5,15 @@
   "description": "订阅节点清洗服务",
   "type": "module",
   "scripts": {
-    "dev": "vite-node src/index.ts",
-    "build": "vite build",
-    "start": "node dist/index.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src tests scripts",
-    "lint:fix": "eslint src tests scripts --fix",
-    "gen:token": "node dist/scripts/generate-token.js",
-    "gen:token:dev": "vite-node scripts/generate-token.ts"
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "gen:token": "vite-node scripts/generate-token.ts",
+    "cf:typegen": "wrangler types"
   },
   "keywords": [
     "subscription",
@@ -24,25 +23,19 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240401.0",
     "@eslint/js": "^9.23.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.29.0",
-    "@typescript-eslint/parser": "^8.29.0",
     "eslint": "^9.23.0",
     "globals": "^17.4.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",
     "vite-node": "^1.1.0",
-    "vitest": "^1.2.0"
+    "vitest": "^1.2.0",
+    "wrangler": "^3.0.0"
   },
   "dependencies": {
-    "@hono/node-server": "^1.8.2",
-    "dotenv": "^17.4.0",
     "hono": "^3.12.0",
-    "js-yaml": "^4.1.0",
-    "pino": "^8.17.0",
-    "pino-pretty": "^10.3.0",
-    "pino-roll": "^4.0.0"
+    "js-yaml": "^4.1.0"
   }
 }
