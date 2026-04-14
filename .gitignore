@@ -38,7 +38,9 @@ TODO.md
 !.claude/rules/.gitkeep
 
 # Resources (生产环境配置)
-resources/*.yaml
+resources/*
 !resources/sources.yaml.example
 !resources/proxies.yaml.example
 !resources/.gitkeep
+
+.wrangler
