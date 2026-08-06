@@ -33,8 +33,8 @@ export interface SubscriptionSource {
   tag: string;
   /** 订阅URL */
   url: string;
-  /** 协议类型: clash, trojan, ss */
-  protocol: 'clash' | 'trojan' | 'ss';
+  /** 协议类型: clash, trojan, ss, vless */
+  protocol: 'clash' | 'trojan' | 'ss' | 'vless';
   /** 是否启用 */
   enabled: boolean;
   /** 节点名称前缀（优先级高于tag） */

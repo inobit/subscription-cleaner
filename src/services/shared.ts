@@ -1,6 +1,7 @@
 import { parseClash } from '../core/parser/clash.ts';
 import { parseTrojan } from '../core/parser/trojan.ts';
 import { parseShadowsocks } from '../core/parser/shadowsocks.ts';
+import { parseVless } from '../core/parser/vless.ts';
 import { aggregateNodes, tagNodes } from '../core/aggregator.ts';
 import { cleanNodes } from '../core/cleaner.ts';
 import type { ProxyNode, ParseResult, SubscriptionSource } from '../core/types.ts';
@@ -28,6 +29,7 @@ export function getParser(protocol: string): ((content: string) => ParseResult) 
     clash: parseClash,
     trojan: parseTrojan,
     ss: parseShadowsocks,
+    vless: parseVless,
   };
   return parsers[protocol];
 }
