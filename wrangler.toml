@@ -9,5 +9,9 @@ id = "5e66bf2d61894f0f82b11d5390b0e7c0"
 [vars]
 LOG_LEVEL = "info"
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # JWT_SECRET 通过 Dashboard 设置，不要提交到 git
 
