@@ -1,4 +1,5 @@
 import type { ProxyNode, ParseResult } from '../types.ts';
+import { decodeBase64 } from './base64.ts';
 
 /**
  * 解析Trojan Base64订阅格式
@@ -9,7 +10,7 @@ import type { ProxyNode, ParseResult } from '../types.ts';
 export function parseTrojan(content: string): ParseResult {
   try {
     // 解码Base64
-    const decoded = Buffer.from(content, 'base64').toString('utf-8').trim();
+    const decoded = decodeBase64(content).trim();
     const lines = decoded.split(/\s+/).filter(Boolean);
 
     const nodes: ProxyNode[] = [];

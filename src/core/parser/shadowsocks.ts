@@ -1,4 +1,5 @@
 import type { ProxyNode, ParseResult } from '../types.ts';
+import { decodeBase64 } from './base64.ts';
 
 /**
  * 解析Shadowsocks Base64订阅格式
@@ -10,7 +11,7 @@ import type { ProxyNode, ParseResult } from '../types.ts';
 export function parseShadowsocks(content: string): ParseResult {
   try {
     // 解码Base64
-    const decoded = Buffer.from(content, 'base64').toString('utf-8').trim();
+    const decoded = decodeBase64(content).trim();
     const lines = decoded.split(/\s+/).filter(Boolean);
 
     const nodes: ProxyNode[] = [];
@@ -29,15 +30,16 @@ export function parseShadowsocks(content: string): ParseResult {
         let password = '';
 
         if (url.username) {
-          // ss://Base64(method:password)@server:port#name
-          const userInfo = Buffer.from(url.username, 'base64').toString('utf-8');
+// ss://Base64(method:password)@server:port#name
+// URL.username 可能带 URL 编码，先解码
+const userInfo = decodeBase64(decodeURIComponent(url.username));
           const [m, p] = userInfo.split(':');
           method = m || '';
           password = p || '';
         } else {
           // ss://method:password@server:port#name (非标准，但存在)
           const beforeAt = line.slice(5).split('@')[0];
-          const decodedInfo = Buffer.from(beforeAt, 'base64').toString('utf-8');
+          const decodedInfo = decodeBase64(beforeAt);
           const [m, p] = decodedInfo.split(':');
           method = m || '';
           password = p || '';

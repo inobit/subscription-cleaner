@@ -1,4 +1,5 @@
 import type { ProxyNode, ParseResult } from '../types.ts';
+import { decodeBase64 } from './base64.ts';
 
 /**
  * 解析Vless Base64订阅格式
@@ -9,8 +10,8 @@ import type { ProxyNode, ParseResult } from '../types.ts';
  */
 export function parseVless(content: string): ParseResult {
   try {
-    // 解码Base64
-    const decoded = Buffer.from(content, 'base64').toString('utf-8').trim();
+    // 解码Base64（Workers 环境无 Buffer，使用 Web 标准 API）
+    const decoded = decodeBase64(content).trim();
     const lines = decoded.split(/\s+/).filter(Boolean);
 
     const nodes: ProxyNode[] = [];
