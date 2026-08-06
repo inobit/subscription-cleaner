@@ -5,11 +5,12 @@
 ## 功能特性
 
 - 🔐 JWT Token 认证（支持 Header 和 Query 参数）
-- 📡 多格式订阅解析（Clash YAML / Trojan / Shadowsocks）
+- 📡 多格式订阅解析（Clash YAML / Trojan / Shadowsocks / Vless Reality）
 - 🧹 节点清洗（去重、过滤无效节点）
 - 🏷️ 自动标签前缀
 - 📝 手动代理配置（通过 KV 存储配置）
 - 🚀 Cloudflare Workers 部署，全球边缘节点加速
+- 📊 内置 observability 日志
 - 🧪 完整单元测试覆盖
 
 ## 快速开始
@@ -36,8 +37,8 @@ Worker 使用 KV 存储配置，需要在 Cloudflare Dashboard 中设置：
    id = "your-kv-namespace-id"
    ```
 3. **设置 JWT_SECRET**：在 Dashboard → Workers → 你的 Worker → Settings → Variables 中添加
-4. **配置订阅源**：通过 KV 存储配置（键名：`sources`）
-5. **配置手动代理**：通过 KV 存储配置（键名：`proxies`，可选）
+4. **配置订阅源**：通过 KV 存储配置（键名：`config:sources`）
+5. **配置手动代理**：通过 KV 存储配置（键名：`config:proxies`，可选）
 
 ### 生成 JWT Token
 
@@ -66,8 +67,8 @@ pnpm gen:token
 # 登录 Cloudflare
 wrangler login
 
-# 部署
-pnpm deploy
+# 部署（注意：pnpm v10 下必须用 run，直接 `pnpm deploy` 是内置 workspace 命令）
+pnpm run deploy
 ```
 
 ## API 文档
@@ -142,10 +143,18 @@ GET /subscription/raw?token=<token>
       "prefix": "Master",
       "cacheEnabled": true,
       "cacheTtlDays": 30
+    },
+    {
+      "tag": "订阅B",
+      "url": "https://example.com/api/v1/client/new",
+      "protocol": "vless",
+      "enabled": true
     }
   ]
 }
 ```
+
+`protocol` 支持：`clash`、`trojan`、`ss`、`vless`。
 
 ### 手动代理配置 (KV: config:proxies)
 
@@ -186,8 +195,14 @@ id = "your-kv-namespace-id"
 [vars]
 LOG_LEVEL = "info"
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # JWT_SECRET 在 Dashboard 中设置，不要提交到 git
 ```
+
+> 启用 `[observability]` 后，可在 Dashboard → Worker → Observability 查看调用日志（免费版保留 3 天，20 万条/天）。
 
 ## 常用命令
 
@@ -195,8 +210,11 @@ LOG_LEVEL = "info"
 # 本地开发
 pnpm dev
 
-# 部署
-pnpm deploy
+# 部署（注意：pnpm v10 下必须用 run，直接 `pnpm deploy` 是内置 workspace 命令）
+pnpm run deploy
+
+# 实时查看日志
+npx wrangler tail subscription-cleaner
 
 # 生成 Workers 类型
 pnpm cf:typegen
