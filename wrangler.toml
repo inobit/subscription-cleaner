@@ -13,5 +13,5 @@ LOG_LEVEL = "info"
 enabled = true
 head_sampling_rate = 1
 
-# JWT_SECRET 通过 Dashboard 设置，不要提交到 git
+# AUTH_TOKEN 通过 `wrangler secret put AUTH_TOKEN` 或 Dashboard 设置（pnpm gen 生成），不要提交到 git
 

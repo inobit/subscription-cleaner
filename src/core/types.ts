@@ -66,29 +66,3 @@ export interface CleanConfig {
   /** 重命名模板 */
   nameTemplate?: string;
 }
-
-/**
- * JWT Payload
- */
-export interface JWTPayload {
-  /** 主题（用户标识） */
-  sub: string;
-  /** 过期时间（Unix时间戳） */
-  exp: number;
-}
-
-/**
- * 应用配置
- */
-export interface AppConfig {
-  /** 运行环境 */
-  nodeEnv: string;
-  /** 服务端口 */
-  port: number;
-  /** JWT密钥 */
-  jwtSecret: string;
-  /** 日志级别 */
-  logLevel: string;
-  /** 资源目录 */
-  resourcesDir: string;
-}
