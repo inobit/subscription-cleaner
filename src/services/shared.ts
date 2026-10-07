@@ -7,12 +7,23 @@ import { cleanNodes } from '../core/cleaner.ts';
 import type { ProxyNode, ParseResult, SubscriptionSource } from '../core/types.ts';
 
 /**
+ * 拉取订阅时的默认请求头
+ * Workers 的 fetch 默认只带 host/cf-worker 头，部分订阅服务端会拒绝此类“裸请求”，
+ * 因此补上常规浏览器请求头
+ */
+const DEFAULT_FETCH_HEADERS: Record<string, string> = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  Accept: '*/*',
+};
+
+/**
  * 获取远程订阅内容
  * @param url 订阅URL
  * @returns 原始内容
  */
 export async function fetchSubscription(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetch(url, { headers: DEFAULT_FETCH_HEADERS });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }

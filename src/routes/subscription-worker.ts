@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import * as yaml from 'js-yaml';
 import { aggregateSubscriptions } from '../services/subscription-worker';
+import { fetchSubscription } from '../services/shared';
 import { authMiddleware } from '../middleware/auth-worker';
 import { createChildLogger } from '../utils/logger-worker';
 
@@ -54,8 +55,7 @@ export function createSubscriptionRouter(): Hono {
     }
 
     try {
-      const response = await fetch(firstEnabled.url);
-      const content = await response.text();
+      const content = await fetchSubscription(firstEnabled.url);
       c.header('Content-Type', 'text/plain; charset=utf-8');
       return c.body(content);
     } catch (error) {

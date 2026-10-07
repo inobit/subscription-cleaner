@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { ProxyNode, SubscriptionSource } from '../../src/core/types';
 import {
   fetchSubscription,
@@ -24,9 +24,26 @@ const createMockLogger = (): Logger => ({
 
 describe('Shared Services', () => {
   describe('fetchSubscription', () => {
-    it('应抛出 HTTP 错误', async () => {
-      // 由于无法实际发起请求，这里只验证函数存在
-      expect(typeof fetchSubscription).toBe('function');
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('应携带默认请求头（UA/Accept），避免被订阅服务端拒绝', async () => {
+      const fetchMock = vi.fn(async () => new Response('ok'));
+      vi.stubGlobal('fetch', fetchMock);
+
+      await fetchSubscription('https://example.com/sub');
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+      const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+      const headers = new Headers(init?.headers);
+      expect(headers.get('User-Agent')).toContain('Mozilla');
+      expect(headers.get('Accept')).toBe('*/*');
+    });
+
+    it('非 2xx 应抛出 HTTP 错误', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('err', { status: 500 })));
+      await expect(fetchSubscription('https://example.com/sub')).rejects.toThrow('HTTP 500');
     });
   });
 
