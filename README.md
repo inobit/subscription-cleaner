@@ -1,10 +1,10 @@
 # 订阅节点清洗服务 (Cloudflare Workers 版本)
 
-基于 Hono + TypeScript 的订阅节点清洗服务，部署在 Cloudflare Workers 上，支持 JWT 认证和多格式订阅解析。
+基于 Hono + TypeScript 的订阅节点清洗服务，部署在 Cloudflare Workers 上，支持静态 Token 认证和多格式订阅解析。
 
 ## 功能特性
 
-- 🔐 JWT Token 认证（支持 Header 和 Query 参数）
+- 🔐 静态 Token 认证（支持 Header 和 Query 参数）
 - 📡 多格式订阅解析（Clash YAML / Trojan / Shadowsocks / Vless Reality）
 - 🧹 节点清洗（去重、过滤无效节点）
 - 🏷️ 自动标签前缀
@@ -36,19 +36,21 @@ Worker 使用 KV 存储配置，需要在 Cloudflare Dashboard 中设置：
    binding = "SUBSCRIPTION_KV"
    id = "your-kv-namespace-id"
    ```
-3. **设置 JWT_SECRET**：在 Dashboard → Workers → 你的 Worker → Settings → Variables 中添加
+3. **设置 AUTH_TOKEN**：`pnpm gen` 生成后，执行 `npx wrangler secret put AUTH_TOKEN`（或在 Dashboard → Workers → 你的 Worker → Settings → Variables 中添加为 Secret）
 4. **配置订阅源**：通过 KV 存储配置（键名：`config:sources`）
 5. **配置手动代理**：通过 KV 存储配置（键名：`config:proxies`，可选）
 
-### 生成 JWT Token
+### 生成 Auth Token
 
 ```bash
-# 设置 JWT_SECRET 环境变量
-export JWT_SECRET="your-secret-key"
+# 生成 48 位十六进制随机 Token（192 bit 熵）
+pnpm gen
 
-# 生成 Token
-pnpm gen:token
+# 写入 Worker secret
+npx wrangler secret put AUTH_TOKEN
 ```
+
+Token 无过期时间；泄露或需更换时，重新生成并 `secret put` 覆盖即可（旧 Token 立即失效）。
 
 ## 部署
 
@@ -119,11 +121,10 @@ GET /subscription/raw?token=<token>
 │   ├── routes/                # 路由（subscription-worker）
 │   ├── services/              # 服务层（subscription-worker, shared）
 │   ├── storage/               # KV 存储适配器
-│   ├── utils/                 # 工具（jwt-worker, logger-worker）
+│   ├── utils/                 # 工具（logger-worker）
 │   └── middleware/            # 中间件（auth-worker, request-log）
 ├── tests/                     # 单元测试
-├── wrangler.toml              # Workers 配置
-└── scripts/                   # 应用脚本（generate-token）
+└── wrangler.toml              # Workers 配置
 ```
 
 ## 配置说明
@@ -199,7 +200,7 @@ LOG_LEVEL = "info"
 enabled = true
 head_sampling_rate = 1
 
-# JWT_SECRET 在 Dashboard 中设置，不要提交到 git
+# AUTH_TOKEN 通过 wrangler secret / Dashboard 设置，不要提交到 git
 ```
 
 > 启用 `[observability]` 后，可在 Dashboard → Worker → Observability 查看调用日志（免费版保留 3 天，20 万条/天）。

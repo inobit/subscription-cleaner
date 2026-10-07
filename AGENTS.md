@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Hono + TypeScript 订阅节点清洗服务，部署于 **Cloudflare Workers**（非 Node.js）。聚合订阅源 → 解析为统一 `ProxyNode` → 去重过滤 → 输出 Clash YAML，全程 JWT 认证、KV 存配置。
+Hono + TypeScript 订阅节点清洗服务，部署于 **Cloudflare Workers**（非 Node.js）。聚合订阅源 → 解析为统一 `ProxyNode` → 去重过滤 → 输出 Clash YAML，全程静态 Token 认证、KV 存配置。
 
 ## 常用命令
 
@@ -8,7 +8,7 @@ Hono + TypeScript 订阅节点清洗服务，部署于 **Cloudflare Workers**（
 pnpm dev          # 本地开发（wrangler 模拟）
 pnpm run deploy   # 部署（pnpm v10 下直接 `pnpm deploy` 是内置命令，会报错）
 npx wrangler tail subscription-cleaner   # 实时日志
-pnpm test / pnpm type-check / pnpm lint / pnpm gen:token
+pnpm test / pnpm type-check / pnpm lint / pnpm gen   # 生成随机 AUTH_TOKEN
 ```
 
 ## 架构要点
@@ -24,4 +24,4 @@ pnpm test / pnpm type-check / pnpm lint / pnpm gen:token
 
 1. **没有全局 `Buffer`**：base64 解码一律用 `core/parser/base64.ts` 的 `decodeBase64()`，禁 `Buffer.from`
 2. **`URL.username` 是 URL 编码值**（如 `%3D`）：解码前先 `decodeURIComponent`
-3. **JWT_SECRET** 走 Dashboard 设置，`config-worker.ts` 强制要求；日志在 Dashboard → Worker → Observability 或 `wrangler tail`
+3. **AUTH_TOKEN** 走 `wrangler secret put` / Dashboard 设置，未配置时中间件返回 500（不放行）；认证为常量时间比较，无过期；日志在 Dashboard → Worker → Observability 或 `wrangler tail`
