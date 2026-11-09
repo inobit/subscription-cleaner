@@ -84,6 +84,39 @@ describe('Shared Services', () => {
       expect(result[0].name).toBe('manual1');
     });
 
+    it('应把手动代理里的分享链接解析为节点对象', async () => {
+      const manualEntries = [
+        { name: 'manual-object', type: 'ss', server: '1.1.1.1', port: 443 },
+        'vless://uuid@192.0.2.1:443?encryption=none&security=tls&sni=example.com&type=ws&path=%2Fray#My-WS-Node',
+      ];
+      const cache = createMockCache();
+      const logger = createMockLogger();
+
+      const result = await aggregateSubscriptions([], manualEntries, cache, logger);
+
+      expect(result).toHaveLength(2);
+      // 手动代理依旧排在前面
+      expect(result[0].name).toBe('manual-object');
+      expect(result[1]).toMatchObject({
+        name: 'My-WS-Node',
+        type: 'vless',
+        server: '192.0.2.1',
+        port: 443,
+        tls: true,
+        network: 'ws',
+        'ws-opts': { path: '/ray' },
+      });
+    });
+
+    it('无法解析的手动代理条目应被跳过而不报错', async () => {
+      const cache = createMockCache();
+      const logger = createMockLogger();
+
+      const result = await aggregateSubscriptions([], ['trojan://pass@1.2.3.4:443#t'], cache, logger);
+
+      expect(result).toHaveLength(0);
+    });
+
     it('空订阅源和空手动节点应返回空数组', async () => {
       const sources: SubscriptionSource[] = [];
       const cache = createMockCache();

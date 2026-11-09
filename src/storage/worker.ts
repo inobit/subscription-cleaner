@@ -1,5 +1,5 @@
 import type { StorageAdapter } from './interface';
-import type { ProxyNode, SubscriptionSource } from '../core/types';
+import type { ManualProxyEntry, ProxyNode, SubscriptionSource } from '../core/types';
 
 export class WorkerStorage implements StorageAdapter {
   constructor(private kv: KVNamespace) {}
@@ -9,9 +9,16 @@ export class WorkerStorage implements StorageAdapter {
     return config?.sources || [];
   }
 
-  async getManualProxies(): Promise<ProxyNode[]> {
-    const config = await this.kv.get<{ proxies: ProxyNode[] }>('config:proxies', 'json');
-    return config?.proxies || [];
+  async getManualProxies(): Promise<ManualProxyEntry[]> {
+    const config = await this.kv.get<{ proxies: ManualProxyEntry[] }>('config:proxies', 'json');
+    const proxies = config?.proxies;
+    if (!Array.isArray(proxies)) return [];
+
+    // 条目允许是节点对象或分享链接字符串，其它类型（null/数字等）直接丢弃
+    return proxies.filter(
+      (entry): entry is ManualProxyEntry =>
+        typeof entry === 'string' || (typeof entry === 'object' && entry !== null)
+    );
   }
 
   async getCache(key: string): Promise<ProxyNode[] | null> {

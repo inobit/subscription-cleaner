@@ -4,7 +4,13 @@ import { parseShadowsocks } from '../core/parser/shadowsocks.ts';
 import { parseVless } from '../core/parser/vless.ts';
 import { aggregateNodes, tagNodes } from '../core/aggregator.ts';
 import { cleanNodes } from '../core/cleaner.ts';
-import type { ProxyNode, ParseResult, SubscriptionSource } from '../core/types.ts';
+import { normalizeManualProxies } from '../core/parser/uri.ts';
+import type {
+  ManualProxyEntry,
+  ProxyNode,
+  ParseResult,
+  SubscriptionSource,
+} from '../core/types.ts';
 
 /**
  * 拉取订阅时的默认请求头
@@ -130,18 +136,21 @@ export async function processSource(
 /**
  * 聚合所有订阅源的节点
  * @param sources 订阅源列表
- * @param manualNodes 手动配置的代理节点（可选，放在结果前面）
+ * @param manualEntries 手动配置的代理条目（节点对象或分享链接，放在结果前面）
  * @param cache 缓存适配器
  * @param logger 日志适配器
  * @returns 聚合并清洗后的节点列表
  */
 export async function aggregateSubscriptions(
   sources: SubscriptionSource[],
-  manualNodes: ProxyNode[] = [],
+  manualEntries: ManualProxyEntry[] = [],
   cache: CacheAdapter,
   logger: Logger
 ): Promise<ProxyNode[]> {
   logger.info(`开始处理 ${sources.length} 个订阅源`);
+
+  // 手动代理允许写分享链接，先统一解析为节点对象
+  const manualNodes = normalizeManualProxies(manualEntries, logger);
 
   const enabledSources = sources.filter((s) => s.enabled);
   const nodeLists = await Promise.all(

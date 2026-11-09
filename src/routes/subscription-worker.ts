@@ -22,13 +22,13 @@ export function createSubscriptionRouter(): Hono {
 
     const storage = c.get('storage');
     const sources = await storage.getSources();
-    const manualNodes = await storage.getManualProxies();
+    const manualEntries = await storage.getManualProxies();
 
-    if (sources.length === 0 && manualNodes.length === 0) {
+    if (sources.length === 0 && manualEntries.length === 0) {
       return c.json({ error: '没有可用的订阅源配置或手动代理' }, 500);
     }
 
-    const nodes = await aggregateSubscriptions(sources, manualNodes, storage);
+    const nodes = await aggregateSubscriptions(sources, manualEntries, storage);
     if (nodes.length === 0) {
       return c.json({ error: '没有可用的节点' }, 503);
     }

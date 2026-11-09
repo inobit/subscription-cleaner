@@ -7,7 +7,7 @@ import {
   type CacheAdapter,
   type Logger,
 } from './shared';
-import type { ProxyNode, SubscriptionSource } from '../core/types';
+import type { ManualProxyEntry, ProxyNode, SubscriptionSource } from '../core/types';
 import type { StorageAdapter } from '../storage/interface';
 
 const logger = createChildLogger('subscription');
@@ -34,17 +34,17 @@ const workerLogger: Logger = {
 /**
  * 聚合所有订阅源的节点（Worker 版本）
  * @param sources 订阅源列表
- * @param manualNodes 手动配置的代理节点
+ * @param manualEntries 手动配置的代理条目（节点对象或分享链接）
  * @param storage 存储适配器
  * @returns 聚合并清洗后的节点列表
  */
 export async function aggregateSubscriptions(
   sources: SubscriptionSource[],
-  manualNodes: ProxyNode[] = [],
+  manualEntries: ManualProxyEntry[] = [],
   storage: StorageAdapter
 ): Promise<ProxyNode[]> {
   const cacheAdapter = createCacheAdapter(storage);
-  return aggregateSubscriptionsInternal(sources, manualNodes, cacheAdapter, workerLogger);
+  return aggregateSubscriptionsInternal(sources, manualEntries, cacheAdapter, workerLogger);
 }
 
 /**

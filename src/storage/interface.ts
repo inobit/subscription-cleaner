@@ -1,4 +1,4 @@
-import type { ProxyNode, SubscriptionSource } from '../core/types';
+import type { ManualProxyEntry, ProxyNode, SubscriptionSource } from '../core/types';
 
 /**
  * 存储适配器接口
@@ -11,9 +11,9 @@ export interface StorageAdapter {
   getSources(): Promise<SubscriptionSource[]>;
 
   /**
-   * 获取手动代理配置
+   * 获取手动代理配置（节点对象与分享链接字符串混排）
    */
-  getManualProxies(): Promise<ProxyNode[]>;
+  getManualProxies(): Promise<ManualProxyEntry[]>;
 
   /**
    * 从缓存获取节点

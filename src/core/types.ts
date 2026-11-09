@@ -58,6 +58,12 @@ export interface ParseResult {
 }
 
 /**
+ * 手动代理条目
+ * 可以是现成的节点对象，也可以是分享链接字符串（如 vless://...），聚合时统一解析为节点对象
+ */
+export type ManualProxyEntry = ProxyNode | string;
+
+/**
  * 清洗配置
  */
 export interface CleanConfig {
