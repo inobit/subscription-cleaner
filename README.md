@@ -159,7 +159,7 @@ GET /subscription/raw?token=<token>
 
 ### 手动代理配置 (KV: config:proxies)
 
-通过 KV 存储配置手动代理节点，键名为 `config:proxies`，存储格式为：
+通过 KV 存储配置手动代理节点，键名为 `config:proxies`。数组元素可以是**节点对象**，也可以直接是**分享链接字符串**（目前支持 `vless://`），两种可混排：
 
 ```json
 {
@@ -171,14 +171,23 @@ GET /subscription/raw?token=<token>
       "port": 443,
       "cipher": "aes-256-gcm",
       "password": "your-password"
-    }
+    },
+    "vless://12345678-1234-1234-1234-123456789abc@192.0.2.1:443?encryption=none&security=tls&sni=example.com&type=ws&path=%2Fray#My-WS-Node"
   ]
 }
 ```
 
+分享链接在聚合时被解析成标准 mihomo 节点对象（输出仍是 YAML 对象，不会出现 `vless://` 字符串）。支持的传输方式与参数：
+
+- 传输：`tcp`（含 `headerType=http` → `network: http`）、`ws`、`grpc`、`http` / `h2`
+- 安全：`security=none` / `tls` / `reality`（reality 必须有 `pbk`，否则丢弃该节点）
+- 参数：`sni` → `servername`、`fp` → `client-fingerprint`、`flow`（仅在 TLS/REALITY 下生效）、`path` / `host` → `ws-opts`、`serviceName` → `grpc-opts`、`alpn`、`insecure` / `allowInsecure` → `skip-cert-verify`
+- 名称取 `#fragment`，解码后作为节点名；缺失时回退为 `vless-<server>-<port>`
+- 解析失败的条目跳过并记 `warn` 日志，不影响整体输出
+
 特点：
 
-- 不经过清洗流程
+- 不经过清洗流程（不做 `server:port` 去重）
 - 放在订阅节点前面
 - 即使订阅源为空也会返回
 
